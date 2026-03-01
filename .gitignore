@@ -1,0 +1,73 @@
+# Build directories
+build/
+test/build/
+*/build/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Qt generated files
+*.autosave
+*. moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.pro.user
+*.pro.user.*
+
+# Compiled binaries
+*.exe
+*.out
+*.app
+KnowledgeCardGame
+test_*
+
+# Object files
+*.o
+*.obj
+*.so
+*.dylib
+*.dll
+*.a
+*.lib
+
+# Editor temp files
+*~
+*.swp
+*.swo
+.*.swp
+.*.swo
+.*.*
+*.bak
+*.backup
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+.DS_Store
+Thumbs.db
+
+# User specific data
+cards.json
+*.backup
+
+# Application data directory
+.knowledgecardgame/
+
+# Backup files
+*.backup
+*_backup.*
+
+# Logs
+*.log
+
+# Temporary directories
+tmp/
+temp/
+*.tmp
