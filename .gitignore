@@ -2,6 +2,7 @@
 build/
 test/build/
 */build/
+notes/
 
 # CMake generated files
 CMakeCache.txt
