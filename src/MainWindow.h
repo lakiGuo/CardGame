@@ -26,9 +26,7 @@ private slots:
     void onAddCardClicked();          // 添加新卡片到卡组
     void onPlayClicked();             // Play：清空桌面并重新发牌
     void onClearTableClicked();
-    void onConnectionModeToggled(bool checked);
     void onDealCountChanged(int value);
-    void onConnectionCreated(CardWidget *from, CardWidget *to);
     void onSelectDeckClicked();       // 选择卡组
     void onSaveDeckClicked();
     void onCardEditRequested(CardWidget *widget);
@@ -56,12 +54,10 @@ private:
     QPushButton *m_saveDeckButton{nullptr};
     QPushButton *m_selectDeckButton{nullptr};  // 原 "Load Deck" -> "Select Deck"
     QPushButton *m_clearButton{nullptr};
-    QPushButton *m_connectButton{nullptr};
     QSlider *m_dealCountSlider{nullptr};
     QLabel *m_dealCountLabel{nullptr};
     QLabel *m_deckInfoLabel{nullptr};
     QLabel *m_statusLabel{nullptr};
-    QLabel *m_connectionModeLabel{nullptr};
 
     int m_dealCount{5};
 };

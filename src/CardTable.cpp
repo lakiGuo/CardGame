@@ -91,14 +91,6 @@ void CardTable::drawCards(int count)
 
 void CardTable::clearTable()
 {
-    // Clear all connections before deleting cards
-    const QList<CardWidget*> cards = m_drawnCards;
-    for (CardWidget *card : cards) {
-        if (card) {
-            card->clearConnections();
-        }
-    }
-
     qDeleteAll(m_drawnCards);
     m_drawnCards.clear();
 }
@@ -116,98 +108,6 @@ void CardTable::addCardWidget(CardWidget *widget)
     });
 
     emit cardDrawn(widget);
-}
-
-void CardTable::enterConnectionMode()
-{
-    m_connectionMode = true;
-}
-
-void CardTable::exitConnectionMode()
-{
-    m_connectionMode = false;
-    m_connectionStart = nullptr;
-
-    if (m_tempConnectionLine) {
-        removeItem(m_tempConnectionLine);
-        delete m_tempConnectionLine;
-        m_tempConnectionLine = nullptr;
-    }
-}
-
-void CardTable::mousePressEvent(QGraphicsSceneMouseEvent *event)
-{
-    if (m_connectionMode && event->button() == Qt::LeftButton) {
-        CardWidget *card = getCardWidgetAt(event->scenePos());
-        if (card) {
-            m_connectionStart = card;
-            m_tempConnectionLine = new QGraphicsLineItem(
-                QLineF(card->pos(), event->scenePos())
-            );
-            QPen pen(QColor(255, 200, 100), 2);
-            pen.setStyle(Qt::DotLine);
-            m_tempConnectionLine->setPen(pen);
-            addItem(m_tempConnectionLine);
-            return;
-        }
-    }
-    QGraphicsScene::mousePressEvent(event);
-}
-
-void CardTable::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
-{
-    if (m_connectionMode && m_tempConnectionLine) {
-        QLineF line = m_tempConnectionLine->line();
-        line.setP2(event->scenePos());
-        m_tempConnectionLine->setLine(line);
-    }
-    QGraphicsScene::mouseMoveEvent(event);
-}
-
-void CardTable::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
-{
-    if (m_connectionMode && m_tempConnectionLine && m_connectionStart) {
-        CardWidget *targetCard = getCardWidgetAt(event->scenePos());
-        if (targetCard && targetCard != m_connectionStart) {
-            finalizeConnection(m_connectionStart, targetCard);
-        }
-
-        removeItem(m_tempConnectionLine);
-        delete m_tempConnectionLine;
-        m_tempConnectionLine = nullptr;
-        m_connectionStart = nullptr;
-    }
-    QGraphicsScene::mouseReleaseEvent(event);
-}
-
-void CardTable::drawConnectionLine(const QPointF &start, const QPointF &end)
-{
-    auto *line = new QGraphicsLineItem(QLineF(start, end));
-    QPen pen(QColor(120, 160, 200), 2);
-    pen.setStyle(Qt::DashLine);
-    line->setPen(pen);
-    addItem(line);
-}
-
-void CardTable::finalizeConnection(CardWidget *from, CardWidget *to)
-{
-    if (!from || !to || from == to)
-        return;
-
-    from->addConnection(to);
-
-    emit connectionCreated(from, to);
-}
-
-CardWidget* CardTable::getCardWidgetAt(const QPointF &pos) const
-{
-    QList<QGraphicsItem*> items = this->items(pos);
-    for (QGraphicsItem *item : items) {
-        if (auto *card = qgraphicsitem_cast<CardWidget*>(item)) {
-            return card;
-        }
-    }
-    return nullptr;
 }
 
 // ============================================================================

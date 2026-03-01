@@ -27,17 +27,11 @@ public:
     bool isExpanded() const { return m_expanded; }
     void setExpanded(bool expanded);
 
-    void addConnection(CardWidget *other);
-    void removeConnection(CardWidget *other);
-    void clearConnections();
-    QList<CardWidget*> connections() const { return m_connections; }
-
     void animateTo(const QPointF &targetPos, int duration = 500);
 
 signals:
     void doubleClicked(CardWidget *widget);
     void editRequested(CardWidget *widget);
-    void connectionRequested(CardWidget *from, CardWidget *to);
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -62,9 +56,6 @@ private:
     static constexpr qreal s_expandedWidth = 400;
     static constexpr qreal s_expandedHeight = 300;
     static constexpr qreal s_cornerRadius = 12;
-
-    QList<CardWidget*> m_connections;
-    QList<QGraphicsLineItem*> m_connectionLines;
 };
 
 #endif // CARDWIDGET_H

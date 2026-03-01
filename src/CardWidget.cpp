@@ -145,68 +145,6 @@ void CardWidget::setExpanded(bool expanded)
     update();
 }
 
-void CardWidget::addConnection(CardWidget *other)
-{
-    if (!other || other == this)
-        return;
-
-    if (m_connections.contains(other))
-        return;
-
-    m_connections.append(other);
-
-    auto *scene = this->scene();
-    if (scene && other->scene() == scene) {
-        auto *line = new QGraphicsLineItem(QLineF(pos(), other->pos()));
-        QPen pen(QColor(120, 160, 200), 2);
-        pen.setStyle(Qt::DashLine);
-        line->setPen(pen);
-        scene->addItem(line);
-        m_connectionLines.append(line);
-    }
-}
-
-void CardWidget::removeConnection(CardWidget *other)
-{
-    int index = m_connections.indexOf(other);
-    if (index == -1)
-        return;
-
-    m_connections.removeAt(index);
-
-    if (index < m_connectionLines.size()) {
-        auto *line = m_connectionLines[index];
-        if (scene()) {
-            scene()->removeItem(line);
-        }
-        delete line;
-        m_connectionLines.removeAt(index);
-    }
-}
-
-void CardWidget::clearConnections()
-{
-    // Remove this card from other cards' connection lists
-    const QList<CardWidget*> connections = m_connections;
-    for (CardWidget *other : connections) {
-        if (other) {
-            other->removeConnection(this);
-        }
-    }
-
-    // Clear all connection lines
-    const QList<QGraphicsLineItem*> lines = m_connectionLines;
-    for (auto *line : lines) {
-        if (scene()) {
-            scene()->removeItem(line);
-        }
-        delete line;
-    }
-
-    m_connections.clear();
-    m_connectionLines.clear();
-}
-
 void CardWidget::animateTo(const QPointF &targetPos, int duration)
 {
     QPropertyAnimation *anim = new QPropertyAnimation(this, "pos", this);
@@ -265,18 +203,6 @@ void CardWidget::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 
 QVariant CardWidget::itemChange(GraphicsItemChange change, const QVariant &value)
 {
-    if (change == ItemPositionChange && scene()) {
-        // Update connection lines
-        for (int i = 0; i < m_connectionLines.size(); ++i) {
-            if (i < m_connections.size()) {
-                CardWidget *other = m_connections[i];
-                // Check if other widget still exists in the scene
-                if (other && other->scene() == scene()) {
-                    m_connectionLines[i]->setLine(QLineF(pos(), other->pos()));
-                }
-            }
-        }
-    }
     return QGraphicsItem::itemChange(change, value);
 }
 

@@ -121,25 +121,12 @@ void MainWindow::setupUI()
     connect(m_dealButton, &QPushButton::clicked, this, &MainWindow::onPlayClicked);
     panelLayout->addWidget(m_dealButton);
 
-    m_connectButton = new QPushButton("Connect Cards", controlPanel);
-    m_connectButton->setObjectName("secondaryButton");
-    m_connectButton->setCheckable(true);
-    connect(m_connectButton, &QPushButton::toggled, this, &MainWindow::onConnectionModeToggled);
-    panelLayout->addWidget(m_connectButton);
-
     m_clearButton = new QPushButton("Clear Table", controlPanel);
     m_clearButton->setObjectName("dangerButton");
     connect(m_clearButton, &QPushButton::clicked, this, &MainWindow::onClearTableClicked);
     panelLayout->addWidget(m_clearButton);
 
     panelLayout->addStretch();
-
-    // Connection mode status
-    m_connectionModeLabel = new QLabel("", controlPanel);
-    m_connectionModeLabel->setObjectName("statusLabel");
-    m_connectionModeLabel->setAlignment(Qt::AlignCenter);
-    m_connectionModeLabel->setVisible(false);
-    panelLayout->addWidget(m_connectionModeLabel);
 
     // Status bar
     m_statusLabel = new QLabel("Ready. Create or load a deck to begin!", controlPanel);
@@ -151,7 +138,6 @@ void MainWindow::setupUI()
     m_view = new CardTableView(m_table, centralWidget);
     m_view->setObjectName("cardView");
 
-    connect(m_table, &CardTable::connectionCreated, this, &MainWindow::onConnectionCreated);
     connect(m_table, &CardTable::cardEditRequested, this, &MainWindow::onCardEditRequested);
 
     mainLayout->addWidget(controlPanel);
@@ -425,33 +411,10 @@ void MainWindow::onClearTableClicked()
     m_statusLabel->setText("Table cleared.");
 }
 
-void MainWindow::onConnectionModeToggled(bool checked)
-{
-    if (checked) {
-        m_table->enterConnectionMode();
-        m_connectionModeLabel->setText("CONNECTION MODE ACTIVE");
-        m_connectionModeLabel->setVisible(true);
-        m_connectButton->setText("Exit Connect Mode");
-        m_statusLabel->setText("Click two cards to create a connection line.");
-    } else {
-        m_table->exitConnectionMode();
-        m_connectionModeLabel->setVisible(false);
-        m_connectButton->setText("Connect Cards");
-        m_statusLabel->setText("Connection mode disabled.");
-    }
-}
-
 void MainWindow::onDealCountChanged(int value)
 {
     m_dealCount = value;
     updateDealCountLabel();
-}
-
-void MainWindow::onConnectionCreated(CardWidget *from, CardWidget *to)
-{
-    m_statusLabel->setText(QString("Connected '%1' <-> '%2'")
-                           .arg(from->card().title())
-                           .arg(to->card().title()));
 }
 
 void MainWindow::onSelectDeckClicked()
