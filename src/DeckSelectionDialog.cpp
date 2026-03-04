@@ -183,14 +183,20 @@ void DeckSelectionDialog::onDeckDoubleClicked(QListWidgetItem *item)
 void DeckSelectionDialog::onCreateNewDeckClicked()
 {
     bool ok;
-    QString deckName = QInputDialog::getText(
-        this,
-        "Create New Deck",
-        "Enter deck name:",
-        QLineEdit::Normal,
-        "",
-        &ok
+    QInputDialog *dialog = new QInputDialog(this);
+    dialog->setWindowTitle("Create New Deck");
+    dialog->setLabelText("Enter deck name:");
+    dialog->setTextValue("");
+    dialog->setStyleSheet(
+        "QInputDialog { color: black; }"
+        "QLabel { color: black; }"
+        "QPushButton { color: black; }"
+        "QLineEdit { color: black; }"
     );
+    dialog->exec();
+    ok = dialog->result() == QDialog::Accepted;
+    QString deckName = dialog->textValue();
+    delete dialog;
 
     if (ok && !deckName.isEmpty()) {
         m_selectedDeckName = deckName;

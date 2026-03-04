@@ -43,6 +43,7 @@ private:
     void showDeckSelectionDialog();   // 显示卡组选择对话框
     void checkAndMigrateOldData();    // 检查并迁移旧数据
     void migrateOldCardsJson(const QString &sourcePath);  // 迁移旧卡组
+    void showWarning(const QString &title, const QString &text);  // 显示黑色字体的警告框
 
     CardTable *m_table{nullptr};
     CardTableView *m_view{nullptr};

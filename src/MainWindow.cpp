@@ -353,7 +353,7 @@ void MainWindow::onAddCardClicked()
 {
     // 检查是否有活动卡组
     if (!m_deckManager->hasActiveDeck()) {
-        QMessageBox::warning(this, "No Deck Selected",
+        showWarning("No Deck Selected",
             "Please select a deck first before adding cards.");
         showDeckSelectionDialog();
         return;
@@ -391,7 +391,7 @@ void MainWindow::onPlayClicked()
     // 3. 从活动卡组获取卡牌
     std::vector<Card> deck = m_deckManager->getActiveDeckCards();
     if (deck.empty()) {
-        QMessageBox::warning(this, "Empty Deck",
+        showWarning("Empty Deck",
             "The selected deck has no cards!\nPlease add cards or select a different deck.");
         return;
     }
@@ -425,7 +425,7 @@ void MainWindow::onSelectDeckClicked()
 void MainWindow::onSaveDeckClicked()
 {
     if (!m_deckManager->hasActiveDeck()) {
-        QMessageBox::warning(this, "No Deck",
+        showWarning("No Deck",
             "Please select a deck first.");
         return;
     }
@@ -438,7 +438,7 @@ void MainWindow::onSaveDeckClicked()
             .arg(deck->name())
             .arg(deck->cardCount()));
     } else {
-        QMessageBox::warning(this, "Save Failed",
+        showWarning("Save Failed",
             "Failed to save deck to file.");
     }
 }
@@ -648,6 +648,21 @@ void MainWindow::migrateOldCardsJson(const QString &sourcePath)
             m_statusLabel->setText("Migrated old deck to 'Default'");
         }
     }
+}
+
+void MainWindow::showWarning(const QString &title, const QString &text)
+{
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle(title);
+    msgBox.setText(text);
+    msgBox.setIcon(QMessageBox::Warning);
+    msgBox.setStandardButtons(QMessageBox::Ok);
+    msgBox.setStyleSheet(
+        "QMessageBox { color: black; }"
+        "QLabel { color: black; }"
+        "QPushButton { color: black; }"
+    );
+    msgBox.exec();
 }
 
 #include "MainWindow.moc"
