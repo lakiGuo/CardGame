@@ -8,6 +8,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QPropertyAnimation>
 #include <QParallelAnimationGroup>
+#include <QTextDocument>
 
 class CardWidget : public QObject, public QGraphicsItem
 {
@@ -22,7 +23,7 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
     Card card() const { return m_card; }
-    void setCard(const Card &card) { m_card = card; update(); }
+    void setCard(const Card &card) { m_card = card; m_contentDocDirty = true; update(); }
 
     bool isExpanded() const { return m_expanded; }
     void setExpanded(bool expanded);
@@ -44,12 +45,16 @@ protected:
 
 private:
     void updateAppearance();
+    void rebuildContentDoc();
 
     Card m_card;
     bool m_expanded{false};
     bool m_isDragging{false};
     bool m_isHovered{false};
     QPointF m_dragStartPos;
+    QTextDocument m_contentDoc;
+    bool m_contentDocDirty{true};
+    bool m_hasLatex{false};
 
     static constexpr qreal s_normalWidth = 160;
     static constexpr qreal s_normalHeight = 220;

@@ -9,6 +9,24 @@ set(CMAKE_AUTORCC ON)
 # Qt5 configuration
 find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
 
+# Check for LaTeX rendering tools (optional, for formula support)
+find_program(LATEX_EXECUTABLE latex)
+find_program(DVIPNG_EXECUTABLE dvipng)
+find_program(PDFLATEX_EXECUTABLE pdflatex)
+find_program(CONVERT_EXECUTABLE convert)
+
+if(LATEX_EXECUTABLE AND DVIPNG_EXECUTABLE)
+    message(STATUS "LaTeX rendering: latex + dvipng pipeline available")
+    add_definitions(-DLATEX_AVAILABLE)
+elseif(PDFLATEX_EXECUTABLE AND CONVERT_EXECUTABLE)
+    message(STATUS "LaTeX rendering: pdflatex + convert pipeline available")
+    add_definitions(-DLATEX_AVAILABLE)
+else()
+    message(WARNING "LaTeX rendering tools not found. Install with:\n"
+                    "  sudo apt-get install texlive-latex-recommended texlive-latex-extra dvipng\n"
+                    "LaTeX formula rendering will be disabled (app will still build and run).")
+endif()
+
 # Source files
 set(SOURCES
     src/main.cpp
@@ -22,6 +40,8 @@ set(SOURCES
     src/DeckRepository.cpp
     src/DeckManager.cpp
     src/DeckSelectionDialog.cpp
+    src/LatexRenderer.cpp
+    src/LatexParser.cpp
 )
 
 # Header files
@@ -36,6 +56,8 @@ set(HEADERS
     src/DeckRepository.h
     src/DeckManager.h
     src/DeckSelectionDialog.h
+    src/LatexRenderer.h
+    src/LatexParser.h
 )
 
 # Executable

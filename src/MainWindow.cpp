@@ -451,6 +451,13 @@ void MainWindow::onCardEditRequested(CardWidget *widget)
     if (dialog.exec() == QDialog::Accepted) {
         Card updatedCard = dialog.getCard();
         widget->setCard(updatedCard);
+
+        // Update card in the active deck and save to disk
+        if (Deck *deck = m_deckManager->activeDeck()) {
+            deck->updateCard(updatedCard.id(), updatedCard);
+            m_deckRepository->saveDeck(*deck);
+        }
+
         m_statusLabel->setText(QString("Card '%1' updated").arg(updatedCard.title()));
     }
 }

@@ -1,4 +1,6 @@
 #include "CardWidget.h"
+#include "LatexRenderer.h"
+#include "LatexParser.h"
 #include <QPainter>
 #include <QCursor>
 #include <QPainterPath>
@@ -8,6 +10,7 @@
 #include <QBrush>
 #include <QFont>
 #include <QDebug>
+#include <QTextCursor>
 
 CardWidget::CardWidget(const Card &card, QGraphicsItem *parent)
     : QGraphicsItem(parent)
@@ -108,14 +111,12 @@ void CardWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWid
     painter->drawText(idRect, Qt::AlignRight | Qt::AlignVCenter, idText);
 
     // Content
-    painter->setPen(QColor(60, 60, 60));
     QFont contentFont = painter->font();
     contentFont.setPixelSize(m_expanded ? 14 : 11);
     contentFont.setBold(false);
     painter->setFont(contentFont);
 
     QRectF contentRect(-w/2 + 15, -h/2 + 60, w - 30, h - 75);
-    int flags = Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap;
     QString displayContent = m_card.content();
     if (!m_expanded) {
         displayContent = displayContent.left(80);
@@ -123,7 +124,25 @@ void CardWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWid
             displayContent += "...";
         }
     }
-    painter->drawText(contentRect, flags, displayContent);
+
+    m_hasLatex = LatexParser::containsLatex(displayContent);
+    if (m_contentDocDirty) {
+        rebuildContentDoc();
+        m_contentDocDirty = false;
+    }
+
+    if (m_hasLatex && LatexRenderer::instance()->isAvailable()) {
+        painter->setClipRect(contentRect);
+        m_contentDoc.setTextWidth(contentRect.width());
+        painter->translate(contentRect.topLeft());
+        m_contentDoc.drawContents(painter, QRectF(0, 0, contentRect.width(), contentRect.height()));
+        painter->translate(-contentRect.topLeft());
+        painter->setClipRect(QRectF(), Qt::NoClip);
+    } else {
+        painter->setPen(QColor(60, 60, 60));
+        int flags = Qt::AlignLeft | Qt::AlignTop | Qt::TextWordWrap;
+        painter->drawText(contentRect, flags, displayContent);
+    }
 
     // Timestamp
     painter->setPen(QColor(150, 140, 130));
@@ -204,6 +223,63 @@ void CardWidget::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 QVariant CardWidget::itemChange(GraphicsItemChange change, const QVariant &value)
 {
     return QGraphicsItem::itemChange(change, value);
+}
+
+void CardWidget::rebuildContentDoc()
+{
+    QString displayContent = m_card.content();
+    if (!m_expanded) {
+        displayContent = displayContent.left(80);
+        if (displayContent.length() < m_card.content().length()) {
+            displayContent += "...";
+        }
+    }
+
+    m_contentDoc.clear();
+    QFont contentFont;
+    contentFont.setPixelSize(m_expanded ? 14 : 11);
+    m_contentDoc.setDefaultFont(contentFont);
+    m_contentDoc.setDefaultStyleSheet("body { color: #3c3c3c; }");
+
+    QList<ContentSegment> segments = LatexParser::parse(displayContent);
+    QTextCursor cursor(&m_contentDoc);
+
+    for (const auto &seg : segments) {
+        if (seg.type == ContentSegment::Text) {
+            cursor.insertText(seg.text);
+        } else {
+            bool displayMode = (seg.type == ContentSegment::DisplayMath);
+            QPixmap pixmap = LatexRenderer::instance()->render(seg.text, displayMode);
+            if (!pixmap.isNull()) {
+                qreal scaleFactor;
+                if (displayMode) {
+                    int targetWidth = static_cast<int>(m_expanded ? 370 : 130);
+                    if (pixmap.width() > targetWidth) {
+                        scaleFactor = static_cast<qreal>(targetWidth) / pixmap.width();
+                    } else {
+                        scaleFactor = 1.0;
+                    }
+                } else {
+                    int targetHeight = static_cast<int>(contentFont.pixelSize() * 1.3);
+                    if (pixmap.height() > 0) {
+                        scaleFactor = static_cast<qreal>(targetHeight) / pixmap.height();
+                    } else {
+                        scaleFactor = 1.0;
+                    }
+                }
+                QPixmap scaled = pixmap.scaled(
+                    static_cast<int>(pixmap.width() * scaleFactor),
+                    static_cast<int>(pixmap.height() * scaleFactor),
+                    Qt::KeepAspectRatio, Qt::SmoothTransformation);
+                cursor.insertImage(scaled.toImage());
+            } else {
+                QString delim = displayMode ? "$$" : "$";
+                QTextCharFormat fmt;
+                fmt.setForeground(QColor(200, 50, 50));
+                cursor.insertText(delim + seg.text + delim, fmt);
+            }
+        }
+    }
 }
 
 #include "CardWidget.moc"

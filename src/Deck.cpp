@@ -56,6 +56,19 @@ void Deck::removeCard(int cardId)
     updateTimestamp();
 }
 
+void Deck::updateCard(int cardId, const Card &updatedCard)
+{
+    std::vector<Card> currentCards = m_cardManager.cards();
+    for (Card &card : currentCards) {
+        if (card.id() == cardId) {
+            card = updatedCard;
+            break;
+        }
+    }
+    m_cardManager.setCards(currentCards);
+    updateTimestamp();
+}
+
 void Deck::clearCards()
 {
     m_cardManager.clear();

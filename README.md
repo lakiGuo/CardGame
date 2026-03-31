@@ -15,7 +15,8 @@
 - 🎲 **随机抽卡** - 每次随机抽取 N 张卡片进行学习
 - 🔄 **自动迁移** - 自动从旧版本迁移数据
 - 💾 **持久化存储** - 卡组数据保存在 `~/.knowledgecardgame/decks/`
-- ✏️ **卡片编辑** - 双击卡片即可编辑内容
+- ✏️ **卡片编辑** - 双击卡片即可编辑内容，修改自动保存
+- 🧮 **LaTeX 公式** - 支持 `$...$` 行内公式和 `$$...$$` 独立行公式渲染
 - 🎨 **现代化 UI** - 暗色主题，流畅的动画效果
 - 🖱️ **鼠标操作** - 支持拖拽、缩放等交互
 
@@ -35,6 +36,12 @@
 sudo apt-get update
 sudo apt-get install qtbase5-dev qt5-qmake cmake build-essential
 ```
+
+**LaTeX 公式渲染（可选）：**
+```bash
+sudo apt-get install texlive-latex-recommended texlive-latex-extra dvipng
+```
+> 未安装 LaTeX 时应用仍可正常编译和运行，公式将以原始文本显示。
 
 **Fedora:**
 ```bash
@@ -85,7 +92,7 @@ make -j$(nproc)
 
 4. **编辑卡片**
    - 双击桌面上的任意卡片进行编辑
-   - 修改后记得点击 "Save Deck" 保存更改
+   - 修改内容后点击 Save 即可，更改会自动保存到磁盘
 
 5. **清空桌面**
    - 点击 "Clear Table" 清除所有桌面上的卡片
@@ -117,6 +124,8 @@ CardGame/
 │   ├── CardWidget.h/cpp   # 卡片UI组件
 │   ├── CardTable.h/cpp    # 卡牌场景
 │   ├── CardEditDialog.h/cpp # 编辑对话框
+│   ├── LatexParser.h/cpp    # LaTeX 公式解析器
+│   ├── LatexRenderer.h/cpp  # LaTeX 公式渲染器
 │   └── DeckSelectionDialog.h/cpp # 卡组选择对话框
 ├── test/                   # 测试代码
 │   ├── test_deck_system.cpp # 完整测试套件
@@ -146,8 +155,8 @@ make test_deck_system
 
 ## 🔧 开发计划
 
-- [ ] 增加latex支持
-- [ ] 修改弹出窗口字体的颜色
+- [x] 增加latex支持
+- [x] 修改弹出窗口字体的颜色
 - [ ] 支持卡片标签和分类
 - [ ] 添加卡片搜索功能
 - [ ] 实现学习进度跟踪
