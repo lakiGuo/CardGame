@@ -139,6 +139,7 @@ void MainWindow::setupUI()
     m_view->setObjectName("cardView");
 
     connect(m_table, &CardTable::cardEditRequested, this, &MainWindow::onCardEditRequested);
+    connect(m_table, &CardTable::cardDeleteRequested, this, &MainWindow::onCardDeleteRequested);
 
     mainLayout->addWidget(controlPanel);
     mainLayout->addWidget(m_view);
@@ -462,6 +463,46 @@ void MainWindow::onCardEditRequested(CardWidget *widget)
     }
 }
 
+void MainWindow::onCardDeleteRequested(CardWidget *widget)
+{
+    if (!widget) return;
+    if (!m_deckManager->hasActiveDeck()) return;
+
+    Card card = widget->card();
+
+    // 确认删除
+    QMessageBox confirmBox(this);
+    confirmBox.setWindowTitle("Delete Card");
+    confirmBox.setText(QString("Are you sure you want to delete card '%1'?").arg(card.title()));
+    confirmBox.setInformativeText("This action will remove the card from the deck and save to disk.");
+    confirmBox.setIcon(QMessageBox::Warning);
+    confirmBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    confirmBox.setDefaultButton(QMessageBox::No);
+    confirmBox.setStyleSheet(
+        "QMessageBox { color: black; }"
+        "QLabel { color: black; }"
+        "QPushButton { color: black; }"
+    );
+
+    if (confirmBox.exec() == QMessageBox::Yes) {
+        // 从卡组中删除卡片
+        Deck *deck = m_deckManager->activeDeck();
+        deck->removeCard(card.id());
+
+        // 保存到磁盘
+        m_deckRepository->saveDeck(*deck);
+
+        // 从场景中移除 widget
+        m_table->removeCardWidget(widget);
+
+        // 更新 UI
+        updateDeckInfoLabel();
+        m_statusLabel->setText(QString("Card '%1' deleted from '%2'")
+            .arg(card.title())
+            .arg(deck->name()));
+    }
+}
+
 // ============================================================================
 // Helper Functions
 // ============================================================================
@@ -591,6 +632,21 @@ void MainWindow::showDeckSelectionDialog()
     if (m_deckManager->hasActiveDeck()) {
         dialog.setSelectedDeckName(m_deckManager->activeDeck()->name());
     }
+
+    // 连接卡组删除信号
+    connect(&dialog, &DeckSelectionDialog::deckDeleteRequested, this,
+        [this](const QString &deckName) {
+            // 删除卡组文件
+            m_deckRepository->deleteDeck(deckName);
+            // 从内存中移除
+            m_deckManager->removeDeck(deckName);
+            // 如果删除的是活动卡组，清空桌面
+            if (!m_deckManager->hasActiveDeck()) {
+                m_table->clearTable();
+            }
+            updateDeckInfoLabel();
+            m_statusLabel->setText(QString("Deck '%1' deleted").arg(deckName));
+        });
 
     if (dialog.exec() == QDialog::Accepted) {
         QString selectedName = dialog.getSelectedDeckName();

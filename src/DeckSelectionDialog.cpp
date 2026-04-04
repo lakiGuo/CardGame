@@ -1,6 +1,7 @@
 #include "DeckSelectionDialog.h"
 #include <QMessageBox>
 #include <QInputDialog>
+#include <algorithm>
 
 DeckSelectionDialog::DeckSelectionDialog(const std::vector<Deck> &decks, QWidget *parent)
     : QDialog(parent)
@@ -93,6 +94,28 @@ void DeckSelectionDialog::setupUI()
             this, &DeckSelectionDialog::onCreateNewDeckClicked);
     buttonLayout->addWidget(m_createNewButton);
 
+    m_deleteButton = new QPushButton("Delete Deck", this);
+    m_deleteButton->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #c0392b;"
+        "  color: white;"
+        "  border: none;"
+        "  border-radius: 6px;"
+        "  padding: 10px 16px;"
+        "  font-size: 13px;"
+        "}"
+        "QPushButton:hover {"
+        "  background-color: #e74c3c;"
+        "}"
+        "QPushButton:disabled {"
+        "  background-color: #5a6c7d;"
+        "}"
+    );
+    m_deleteButton->setEnabled(false);
+    connect(m_deleteButton, &QPushButton::clicked,
+            this, &DeckSelectionDialog::onDeleteDeckClicked);
+    buttonLayout->addWidget(m_deleteButton);
+
     buttonLayout->addStretch();
 
     m_cancelButton = new QPushButton("Cancel", this);
@@ -169,6 +192,7 @@ void DeckSelectionDialog::onDeckSelected(QListWidgetItem *item)
     if (item) {
         m_selectedDeckName = item->data(Qt::UserRole).toString();
         m_okButton->setEnabled(true);
+        m_deleteButton->setEnabled(true);
     }
 }
 
@@ -211,5 +235,52 @@ void DeckSelectionDialog::onOkClicked()
 {
     if (!m_selectedDeckName.isEmpty()) {
         accept();
+    }
+}
+
+void DeckSelectionDialog::onDeleteDeckClicked()
+{
+    if (m_selectedDeckName.isEmpty()) return;
+
+    QMessageBox confirmBox(this);
+    confirmBox.setWindowTitle("Delete Deck");
+    confirmBox.setText(QString("Are you sure you want to delete deck '%1'?").arg(m_selectedDeckName));
+    confirmBox.setInformativeText("This will permanently delete the deck file from disk.");
+    confirmBox.setIcon(QMessageBox::Warning);
+    confirmBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    confirmBox.setDefaultButton(QMessageBox::No);
+    confirmBox.setStyleSheet(
+        "QMessageBox { color: black; }"
+        "QLabel { color: black; }"
+        "QPushButton { color: black; }"
+    );
+
+    if (confirmBox.exec() == QMessageBox::Yes) {
+        emit deckDeleteRequested(m_selectedDeckName);
+
+        // 从列表中移除
+        for (int i = 0; i < m_deckListWidget->count(); ++i) {
+            QListWidgetItem *item = m_deckListWidget->item(i);
+            if (item && item->data(Qt::UserRole).toString() == m_selectedDeckName) {
+                delete m_deckListWidget->takeItem(i);
+                break;
+            }
+        }
+
+        // 从内部列表中移除
+        m_decks.erase(
+            std::remove_if(m_decks.begin(), m_decks.end(),
+                [this](const Deck &deck) { return deck.name() == m_selectedDeckName; }),
+            m_decks.end()
+        );
+
+        m_selectedDeckName.clear();
+        m_okButton->setEnabled(false);
+        m_deleteButton->setEnabled(false);
+
+        if (m_deckListWidget->count() > 0) {
+            m_deckListWidget->setCurrentRow(0);
+            onDeckSelected(m_deckListWidget->item(0));
+        }
     }
 }

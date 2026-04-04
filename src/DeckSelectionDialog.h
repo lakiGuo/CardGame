@@ -39,11 +39,15 @@ public:
      */
     void setSelectedDeckName(const QString &name);
 
+signals:
+    void deckDeleteRequested(const QString &deckName);
+
 private slots:
     void onDeckSelected(QListWidgetItem *item);
     void onDeckDoubleClicked(QListWidgetItem *item);
     void onCreateNewDeckClicked();
     void onOkClicked();
+    void onDeleteDeckClicked();
 
 private:
     void setupUI();
@@ -51,6 +55,7 @@ private:
 
     QListWidget *m_deckListWidget{nullptr};
     QPushButton *m_createNewButton{nullptr};
+    QPushButton *m_deleteButton{nullptr};
     QPushButton *m_okButton{nullptr};
     QPushButton *m_cancelButton{nullptr};
     QLabel *m_promptLabel{nullptr};

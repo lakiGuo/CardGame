@@ -84,6 +84,11 @@ void CardTable::drawCards(int count)
             emit cardEditRequested(widget);
         });
 
+        // Connect delete request signal
+        connect(widget, &CardWidget::deleteRequested, this, [this, widget]() {
+            emit cardDeleteRequested(widget);
+        });
+
         m_drawnCards.append(widget);
         emit cardDrawn(widget);
     }
@@ -107,7 +112,21 @@ void CardTable::addCardWidget(CardWidget *widget)
         emit cardEditRequested(widget);
     });
 
+    // Connect delete request signal
+    connect(widget, &CardWidget::deleteRequested, this, [this, widget]() {
+        emit cardDeleteRequested(widget);
+    });
+
     emit cardDrawn(widget);
+}
+
+void CardTable::removeCardWidget(CardWidget *widget)
+{
+    if (!widget) return;
+
+    m_drawnCards.removeAll(widget);
+    removeItem(widget);
+    delete widget;
 }
 
 // ============================================================================

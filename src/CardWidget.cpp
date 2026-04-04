@@ -10,6 +10,7 @@
 #include <QBrush>
 #include <QFont>
 #include <QDebug>
+#include <QMenu>
 #include <QTextCursor>
 
 CardWidget::CardWidget(const Card &card, QGraphicsItem *parent)
@@ -202,6 +203,22 @@ void CardWidget::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
 {
     Q_UNUSED(event)
     emit editRequested(this);
+}
+
+void CardWidget::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
+{
+    QMenu menu;
+
+    QAction *editAction = menu.addAction("Edit Card");
+    menu.addSeparator();
+    QAction *deleteAction = menu.addAction("Delete Card");
+
+    QAction *selected = menu.exec(event->screenPos());
+    if (selected == editAction) {
+        emit editRequested(this);
+    } else if (selected == deleteAction) {
+        emit deleteRequested(this);
+    }
 }
 
 void CardWidget::hoverEnterEvent(QGraphicsSceneHoverEvent *event)

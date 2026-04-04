@@ -30,6 +30,7 @@ private slots:
     void onSelectDeckClicked();       // 选择卡组
     void onSaveDeckClicked();
     void onCardEditRequested(CardWidget *widget);
+    void onCardDeleteRequested(CardWidget *widget);    // 删除卡片
     void onActiveDeckChanged(const QString &deckName);  // 活动卡组变更
 
 private:

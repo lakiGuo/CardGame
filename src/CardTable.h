@@ -26,9 +26,13 @@ public:
     // 添加单个卡牌到场景并追踪
     void addCardWidget(CardWidget *widget);
 
+    // 从场景中移除单个卡牌 widget
+    void removeCardWidget(CardWidget *widget);
+
 signals:
     void cardDrawn(CardWidget *widget);
     void cardEditRequested(CardWidget *widget);
+    void cardDeleteRequested(CardWidget *widget);
 
 private:
     std::vector<Card> m_cardPool;
