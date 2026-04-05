@@ -7,15 +7,19 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
 # Qt5 configuration
-find_package(Qt5 REQUIRED COMPONENTS Core Widgets)
+find_package(Qt5 REQUIRED COMPONENTS Core Widgets Svg)
 
 # Check for LaTeX rendering tools (optional, for formula support)
 find_program(LATEX_EXECUTABLE latex)
+find_program(DVISVGM_EXECUTABLE dvisvgm)
 find_program(DVIPNG_EXECUTABLE dvipng)
 find_program(PDFLATEX_EXECUTABLE pdflatex)
 find_program(CONVERT_EXECUTABLE convert)
 
-if(LATEX_EXECUTABLE AND DVIPNG_EXECUTABLE)
+if(LATEX_EXECUTABLE AND DVISVGM_EXECUTABLE)
+    message(STATUS "LaTeX rendering: latex + dvisvgm (SVG) pipeline available")
+    add_definitions(-DLATEX_AVAILABLE)
+elseif(LATEX_EXECUTABLE AND DVIPNG_EXECUTABLE)
     message(STATUS "LaTeX rendering: latex + dvipng pipeline available")
     add_definitions(-DLATEX_AVAILABLE)
 elseif(PDFLATEX_EXECUTABLE AND CONVERT_EXECUTABLE)
@@ -70,6 +74,7 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE
     Qt5::Core
     Qt5::Widgets
+    Qt5::Svg
 )
 
 # Include directories
