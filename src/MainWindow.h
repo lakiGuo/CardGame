@@ -25,6 +25,7 @@ public:
 private slots:
     void onAddCardClicked();          // 添加新卡片到卡组
     void onPlayClicked();             // Play：清空桌面并重新发牌
+    void onBrowseDeckClicked();       // Browse：平铺展示卡组所有卡片
     void onClearTableClicked();
     void onDealCountChanged(int value);
     void onSelectDeckClicked();       // 选择卡组
@@ -53,6 +54,7 @@ private:
 
     QPushButton *m_addCardButton{nullptr};
     QPushButton *m_dealButton{nullptr};        // 原 "Deal Cards" -> "Play"
+    QPushButton *m_browseButton{nullptr};      // Browse Deck 按钮
     QPushButton *m_saveDeckButton{nullptr};
     QPushButton *m_selectDeckButton{nullptr};  // 原 "Load Deck" -> "Select Deck"
     QPushButton *m_clearButton{nullptr};

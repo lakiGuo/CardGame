@@ -1,14 +1,14 @@
 #include "Card.h"
 
 Card::Card()
-    : m_id(0)
+    : m_id(QUuid::createUuid())
     , m_title()
     , m_content()
     , m_createdAt(QDateTime::currentDateTime())
 {
 }
 
-Card::Card(int id, const QString &title, const QString &content)
+Card::Card(const QUuid &id, const QString &title, const QString &content)
     : m_id(id)
     , m_title(title)
     , m_content(content)

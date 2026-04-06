@@ -30,12 +30,20 @@ public:
     bool isExpanded() const { return m_expanded; }
     void setExpanded(bool expanded);
 
+    bool isFocused() const { return m_focused; }
+    void setFocused(bool focused);
+
+    qreal cardWidth() const { return m_width; }
+    qreal cardHeight() const { return m_height; }
+    void setSize(qreal w, qreal h);
+
     void animateTo(const QPointF &targetPos, int duration = 500);
 
 signals:
     void doubleClicked(CardWidget *widget);
     void editRequested(CardWidget *widget);
     void deleteRequested(CardWidget *widget);
+    void returnRequested(CardWidget *widget);
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -55,6 +63,8 @@ private:
     void updateAppearance();
     void rebuildLayout();
     void paintLatexContent(QPainter *painter, const QRectF &contentRect);
+    bool hitReturnButton(const QPointF &pos) const;
+    void paintReturnButton(QPainter *painter);
 
     struct RenderSegment {
         enum Type { Text, InlineMath, DisplayMath };
@@ -65,6 +75,7 @@ private:
 
     Card m_card;
     bool m_expanded{false};
+    bool m_focused{false};
     bool m_isDragging{false};
     bool m_isHovered{false};
     QPointF m_dragStartPos;
@@ -91,6 +102,7 @@ private:
     static constexpr qreal s_expandedHeight = 300;
     static constexpr qreal s_cornerRadius = 12;
     static constexpr qreal s_resizeZone = 8; // 缩放热区宽度
+    static constexpr qreal s_returnButtonSize = 28; // 返回按钮半径
 };
 
 #endif // CARDWIDGET_H
