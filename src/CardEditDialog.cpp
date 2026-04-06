@@ -16,7 +16,7 @@ CardEditDialog::CardEditDialog(const Card &card, QWidget *parent)
 
     m_titleEdit->setText(card.title());
     m_contentEdit->setPlainText(card.content());
-    m_idLabel->setText(QString("#%1").arg(card.id()));
+    m_idLabel->setText("#" + card.id().toString().left(8));
     m_createdLabel->setText(card.createdAt().toString("yyyy-MM-dd hh:mm:ss"));
 }
 

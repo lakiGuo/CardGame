@@ -5,6 +5,8 @@
 #include <QBrush>
 #include <QPen>
 #include <QTimer>
+#include <QPropertyAnimation>
+#include <QParallelAnimationGroup>
 #include <algorithm>
 #include <cmath>
 
@@ -96,8 +98,201 @@ void CardTable::drawCards(int count)
 
 void CardTable::clearTable()
 {
+    m_focusedCard = nullptr;
     qDeleteAll(m_drawnCards);
     m_drawnCards.clear();
+}
+
+void CardTable::setMode(TableMode mode)
+{
+    if (m_mode == mode) return;
+
+    // Exiting browse mode - unfocus if needed
+    if (m_mode == TableMode::Browse && mode != TableMode::Browse) {
+        if (m_focusedCard) {
+            m_focusedCard->setFocused(false);
+            m_focusedCard->setScale(1.0);
+            m_focusedCard->setZValue(0);
+            m_focusedCard->setFlag(QGraphicsItem::ItemIsMovable, true);
+            m_focusedCard = nullptr;
+        }
+    }
+
+    m_mode = mode;
+    emit modeChanged(mode);
+}
+
+void CardTable::layoutCardsInGrid(const std::vector<Card> &cards)
+{
+    if (cards.empty()) return;
+
+    static constexpr qreal CARD_WIDTH = 160;
+    static constexpr qreal CARD_HEIGHT = 220;
+    static constexpr qreal H_GAP = 20;
+    static constexpr qreal V_GAP = 20;
+
+    int n = static_cast<int>(cards.size());
+    int cols = std::max(1, static_cast<int>(std::floor(std::sqrt(n * (CARD_WIDTH + H_GAP) / (CARD_HEIGHT + V_GAP)))));
+    int rows = static_cast<int>(std::ceil(n / static_cast<double>(cols)));
+
+    QRectF viewRect = sceneRect();
+    QPointF center = viewRect.center();
+
+    qreal gridW = cols * (CARD_WIDTH + H_GAP) - H_GAP;
+    qreal gridH = rows * (CARD_HEIGHT + V_GAP) - V_GAP;
+    qreal startX = center.x() - gridW / 2 + CARD_WIDTH / 2;
+    qreal startY = center.y() - gridH / 2 + CARD_HEIGHT / 2;
+
+    for (int i = 0; i < n; ++i) {
+        const Card &card = cards[i];
+        auto *widget = new CardWidget(card);
+        addItem(widget);
+
+        int col = i % cols;
+        int row = i / cols;
+        qreal targetX = startX + col * (CARD_WIDTH + H_GAP);
+        qreal targetY = startY + row * (CARD_HEIGHT + V_GAP);
+
+        // Start from off-screen
+        widget->setPos(2000, 0);
+        widget->setFlag(QGraphicsItem::ItemIsMovable, false);
+
+        int delay = i * 30;
+        QTimer::singleShot(delay, [widget, targetX, targetY]() {
+            widget->animateTo(QPointF(targetX, targetY), 400);
+        });
+
+        // Connect signals
+        connect(widget, &CardWidget::editRequested, this, [this, widget]() {
+            emit cardEditRequested(widget);
+        });
+        connect(widget, &CardWidget::deleteRequested, this, [this, widget]() {
+            emit cardDeleteRequested(widget);
+        });
+        connect(widget, &CardWidget::returnRequested, this, [this]() {
+            unfocusCard();
+        });
+
+        m_drawnCards.append(widget);
+        emit cardDrawn(widget);
+    }
+}
+
+void CardTable::focusCard(CardWidget *widget)
+{
+    if (!widget) return;
+
+    // If clicking a different card, instantly return the current one
+    if (m_focusedCard && m_focusedCard != widget) {
+        m_focusedCard->setFocused(false);
+        m_focusedCard->setSize(m_focusedCardOriginalWidth, m_focusedCardOriginalHeight);
+        m_focusedCard->setPos(m_focusedCardOriginalPos);
+        m_focusedCard->setScale(m_focusedCardOriginalScale);
+        m_focusedCard->setZValue(0);
+        m_focusedCard->setFlag(QGraphicsItem::ItemIsMovable, false);
+        m_focusedCard = nullptr;
+    }
+
+    // If already focused on this card, do nothing
+    if (m_focusedCard == widget) {
+        return;
+    }
+
+    // Save original state (position, scale, dimensions)
+    m_focusedCard = widget;
+    m_focusedCardOriginalPos = widget->pos();
+    m_focusedCardOriginalScale = widget->scale();
+    m_focusedCardOriginalWidth = widget->cardWidth();
+    m_focusedCardOriginalHeight = widget->cardHeight();
+
+    // Animate to center with zoom
+    QPointF center = sceneRect().center();
+
+    auto *posAnim = new QPropertyAnimation(widget, "pos");
+    posAnim->setDuration(300);
+    posAnim->setEndValue(center);
+    posAnim->setEasingCurve(QEasingCurve::OutCubic);
+
+    auto *scaleAnim = new QPropertyAnimation(widget, "scale");
+    scaleAnim->setDuration(300);
+    scaleAnim->setStartValue(widget->scale());
+    scaleAnim->setEndValue(1.8);
+    scaleAnim->setEasingCurve(QEasingCurve::OutCubic);
+
+    auto *group = new QParallelAnimationGroup(this);
+    group->addAnimation(posAnim);
+    group->addAnimation(scaleAnim);
+    group->start();
+
+    widget->setZValue(1000);
+    widget->setFocused(true);
+}
+
+void CardTable::unfocusCard()
+{
+    if (!m_focusedCard) return;
+
+    auto *widget = m_focusedCard;
+    m_focusedCard = nullptr;
+
+    // Restore original dimensions immediately
+    widget->setFocused(false);
+    widget->setSize(m_focusedCardOriginalWidth, m_focusedCardOriginalHeight);
+
+    auto *posAnim = new QPropertyAnimation(widget, "pos");
+    posAnim->setDuration(300);
+    posAnim->setEndValue(m_focusedCardOriginalPos);
+    posAnim->setEasingCurve(QEasingCurve::OutCubic);
+
+    auto *scaleAnim = new QPropertyAnimation(widget, "scale");
+    scaleAnim->setDuration(300);
+    scaleAnim->setStartValue(widget->scale());
+    scaleAnim->setEndValue(m_focusedCardOriginalScale);
+    scaleAnim->setEasingCurve(QEasingCurve::OutCubic);
+
+    auto *group = new QParallelAnimationGroup(this);
+    group->addAnimation(posAnim);
+    group->addAnimation(scaleAnim);
+    connect(group, &QParallelAnimationGroup::finished, [widget]() {
+        widget->setZValue(0);
+    });
+    group->start();
+
+    widget->setFlag(QGraphicsItem::ItemIsMovable, false);
+}
+
+void CardTable::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    // Let right-click through for context menu regardless of mode
+    if (event->button() == Qt::RightButton) {
+        QGraphicsScene::mousePressEvent(event);
+        return;
+    }
+
+    if (m_mode == TableMode::Browse) {
+        QGraphicsItem *item = itemAt(event->scenePos(), QTransform());
+
+        if (!item) {
+            // Clicked on background — if a card is focused, keep it
+            return;
+        }
+
+        CardWidget *cardWidget = dynamic_cast<CardWidget*>(item);
+        if (!cardWidget) return;
+
+        if (m_focusedCard == cardWidget) {
+            // Click on the already-focused card — forward to widget
+            // so that the return arrow button and resize handles work
+            QGraphicsScene::mousePressEvent(event);
+            return;
+        }
+
+        // Click on a different card — focus it
+        emit cardClickedInBrowse(cardWidget);
+        return;
+    }
+
+    QGraphicsScene::mousePressEvent(event);
 }
 
 void CardTable::addCardWidget(CardWidget *widget)
@@ -117,12 +312,20 @@ void CardTable::addCardWidget(CardWidget *widget)
         emit cardDeleteRequested(widget);
     });
 
+    connect(widget, &CardWidget::returnRequested, this, [this]() {
+        unfocusCard();
+    });
+
     emit cardDrawn(widget);
 }
 
 void CardTable::removeCardWidget(CardWidget *widget)
 {
     if (!widget) return;
+
+    if (m_focusedCard == widget) {
+        m_focusedCard = nullptr;
+    }
 
     m_drawnCards.removeAll(widget);
     removeItem(widget);

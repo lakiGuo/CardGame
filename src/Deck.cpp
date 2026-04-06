@@ -1,5 +1,6 @@
 #include "Deck.h"
 #include <QJsonDocument>
+#include <QUuid>
 
 Deck::Deck()
     : m_name("Untitled")
@@ -40,9 +41,8 @@ void Deck::addCard(const Card &card)
     updateTimestamp();
 }
 
-void Deck::removeCard(int cardId)
+void Deck::removeCard(const QUuid &cardId)
 {
-    // 获取当前卡牌列表
     std::vector<Card> currentCards = m_cardManager.cards();
     std::vector<Card> newCards;
 
@@ -56,7 +56,7 @@ void Deck::removeCard(int cardId)
     updateTimestamp();
 }
 
-void Deck::updateCard(int cardId, const Card &updatedCard)
+void Deck::updateCard(const QUuid &cardId, const Card &updatedCard)
 {
     std::vector<Card> currentCards = m_cardManager.cards();
     for (Card &card : currentCards) {
@@ -97,9 +97,8 @@ QJsonObject Deck::toJson() const
     // 序列化卡牌数组
     QJsonArray cardsArray;
     for (const Card &card : m_cardManager.cards()) {
-        // 使用 CardManager 的序列化方法
         QJsonObject cardObj;
-        cardObj["id"] = card.id();
+        cardObj["id"] = card.id().toString();
         cardObj["title"] = card.title();
         cardObj["content"] = card.content();
         cardObj["created"] = card.createdAt().toString(Qt::ISODate);
@@ -125,8 +124,21 @@ Deck Deck::fromJson(const QJsonObject &json)
         QJsonArray cardsArray = json["cards"].toArray();
         for (const QJsonValue &value : cardsArray) {
             QJsonObject cardObj = value.toObject();
+
+            QUuid cardId;
+            if (cardObj.contains("id")) {
+                QString idStr = cardObj["id"].toString();
+                if (idStr.length() == 36) {
+                    cardId = QUuid(idStr);
+                } else {
+                    cardId = QUuid::createUuid();
+                }
+            } else {
+                cardId = QUuid::createUuid();
+            }
+
             Card card(
-                cardObj["id"].toInt(0),
+                cardId,
                 cardObj["title"].toString(""),
                 cardObj["content"].toString("")
             );

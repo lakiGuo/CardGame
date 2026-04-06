@@ -28,8 +28,8 @@ public:
     // 卡牌管理
     std::vector<Card> cards() const;
     void addCard(const Card &card);
-    void removeCard(int cardId);
-    void updateCard(int cardId, const Card &updatedCard);
+    void removeCard(const QUuid &cardId);
+    void updateCard(const QUuid &cardId, const Card &updatedCard);
     void clearCards();
     size_t cardCount() const;
 

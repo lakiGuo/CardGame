@@ -8,6 +8,7 @@
 #include <QFileInfo>
 #include <QMessageBox>
 #include <QDateTime>
+#include <QUuid>
 #include <random>
 #include <numeric>
 
@@ -121,6 +122,12 @@ void MainWindow::setupUI()
     connect(m_dealButton, &QPushButton::clicked, this, &MainWindow::onPlayClicked);
     panelLayout->addWidget(m_dealButton);
 
+    m_browseButton = new QPushButton("Browse Deck", controlPanel);
+    m_browseButton->setObjectName("browseButton");
+    m_browseButton->setCheckable(true);
+    connect(m_browseButton, &QPushButton::clicked, this, &MainWindow::onBrowseDeckClicked);
+    panelLayout->addWidget(m_browseButton);
+
     m_clearButton = new QPushButton("Clear Table", controlPanel);
     m_clearButton->setObjectName("dangerButton");
     connect(m_clearButton, &QPushButton::clicked, this, &MainWindow::onClearTableClicked);
@@ -140,6 +147,9 @@ void MainWindow::setupUI()
 
     connect(m_table, &CardTable::cardEditRequested, this, &MainWindow::onCardEditRequested);
     connect(m_table, &CardTable::cardDeleteRequested, this, &MainWindow::onCardDeleteRequested);
+    connect(m_table, &CardTable::cardClickedInBrowse, this, [this](CardWidget *widget) {
+        m_table->focusCard(widget);
+    });
 
     mainLayout->addWidget(controlPanel);
     mainLayout->addWidget(m_view);
@@ -271,6 +281,26 @@ void MainWindow::applyStylesheet()
             background-color: #e74c3c;
         }
 
+        /* Browse Button */
+        #browseButton {
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        #browseButton:hover {
+            background-color: #3498db;
+        }
+
+        #browseButton:checked {
+            background-color: #1a5276;
+            border: 2px solid #3498db;
+        }
+
         /* File Button */
         #fileButton {
             background-color: #7f8c8d;
@@ -362,8 +392,7 @@ void MainWindow::onAddCardClicked()
 
     // 创建一个新卡片并添加到当前活动卡组
     Deck *deck = m_deckManager->activeDeck();
-    int newId = static_cast<int>(deck->cardCount()) + 1;
-    Card newCard(newId, "New Card", "Enter card content here...");
+    Card newCard(QUuid::createUuid(), "New Card", "Enter card content here...");
 
     CardEditDialog dialog(newCard, this);
     if (dialog.exec() == QDialog::Accepted) {
@@ -373,11 +402,26 @@ void MainWindow::onAddCardClicked()
         m_statusLabel->setText(QString("Card '%1' added to '%2'")
             .arg(updatedCard.title())
             .arg(deck->name()));
+
+        // 如果在浏览模式，自动刷新
+        if (m_table->mode() == CardTable::TableMode::Browse) {
+            m_table->clearTable();
+            m_table->layoutCardsInGrid(m_deckManager->getActiveDeckCards());
+            m_view->fitInView(m_table->sceneRect(), Qt::KeepAspectRatio);
+            m_browseButton->setChecked(true);
+            m_statusLabel->setText(QString("Browsing '%1' (%2 cards)")
+                .arg(deck->name())
+                .arg(deck->cardCount()));
+        }
     }
 }
 
 void MainWindow::onPlayClicked()
 {
+    // 退出浏览模式
+    m_table->setMode(CardTable::TableMode::Play);
+    m_browseButton->setChecked(false);
+
     // 1. 检查是否有活动卡组
     if (!m_deckManager->hasActiveDeck()) {
         showDeckSelectionDialog();
@@ -408,8 +452,44 @@ void MainWindow::onPlayClicked()
 
 void MainWindow::onClearTableClicked()
 {
+    m_table->setMode(CardTable::TableMode::Idle);
+    m_browseButton->setChecked(false);
     m_table->clearTable();
     m_statusLabel->setText("Table cleared.");
+}
+
+void MainWindow::onBrowseDeckClicked()
+{
+    if (!m_deckManager->hasActiveDeck()) {
+        showDeckSelectionDialog();
+        if (!m_deckManager->hasActiveDeck()) {
+            m_browseButton->setChecked(false);
+            return;
+        }
+    }
+
+    // 清空桌面
+    m_table->clearTable();
+
+    // 获取所有卡片
+    std::vector<Card> allCards = m_deckManager->getActiveDeckCards();
+    if (allCards.empty()) {
+        showWarning("Empty Deck", "The deck has no cards to browse.");
+        m_browseButton->setChecked(false);
+        return;
+    }
+
+    // 设置浏览模式并平铺展示
+    m_table->setMode(CardTable::TableMode::Browse);
+    m_table->layoutCardsInGrid(allCards);
+
+    // 适配视图以显示所有卡片
+    m_view->fitInView(m_table->sceneRect(), Qt::KeepAspectRatio);
+
+    m_browseButton->setChecked(true);
+    m_statusLabel->setText(QString("Browsing '%1' (%2 cards)")
+        .arg(m_deckManager->activeDeck()->name())
+        .arg(allCards.size()));
 }
 
 void MainWindow::onDealCountChanged(int value)

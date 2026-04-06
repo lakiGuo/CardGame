@@ -39,7 +39,7 @@ private:
     QLabel *m_createdLabel{nullptr};
     bool m_previewMode{false};
 
-    int m_cardId;
+    QUuid m_cardId;
     QDateTime m_createdAt;
 };
 

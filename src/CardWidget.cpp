@@ -61,7 +61,8 @@ CardWidget::ResizeMode CardWidget::hitResizeZone(const QPointF &pos) const
 
 QRectF CardWidget::boundingRect() const
 {
-    return QRectF(-m_width / 2, -m_height / 2, m_width, m_height);
+    qreal topExtra = m_focused ? (s_returnButtonSize * 2 + 4) : 0;
+    return QRectF(-m_width / 2, -m_height / 2 - topExtra, m_width, m_height + topExtra);
 }
 
 // ============================================================================
@@ -125,13 +126,13 @@ void CardWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWid
     QRectF titleRect(-w/2 + 15, -h/2, w - 30, 50);
     painter->drawText(titleRect, Qt::AlignLeft | Qt::AlignVCenter, m_card.title());
 
-    // ID badge
-    QString idText = QString("#%1").arg(m_card.id());
+    // ID badge - show first 8 chars of UUID
+    QString idText = "#" + m_card.id().toString().left(8);
     QFont idFont = painter->font();
     idFont.setPixelSize(10);
     painter->setFont(idFont);
     painter->setPen(QColor(200, 220, 255));
-    QRectF idRect(w/2 - 45, -h/2, 40, 50);
+    QRectF idRect(w/2 - 55, -h/2, 50, 50);
     painter->drawText(idRect, Qt::AlignRight | Qt::AlignVCenter, idText);
 
     // Content — 完整显示，不再截断
@@ -178,6 +179,11 @@ void CardWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWid
         // Corner handle
         painter->drawRect(QRectF(w/2 - 6, h/2 - 6, 6, 6));
     }
+
+    // Return button (only when focused in browse mode)
+    if (m_focused) {
+        paintReturnButton(painter);
+    }
 }
 
 // ============================================================================
@@ -194,6 +200,24 @@ void CardWidget::setExpanded(bool expanded)
     m_height = expanded ? s_expandedHeight : s_normalHeight;
     m_contentDocDirty = true;
     prepareGeometryChange();
+    update();
+}
+
+void CardWidget::setFocused(bool focused)
+{
+    if (m_focused == focused) return;
+    prepareGeometryChange();
+    m_focused = focused;
+    update();
+}
+
+void CardWidget::setSize(qreal w, qreal h)
+{
+    if (qFuzzyCompare(m_width, w) && qFuzzyCompare(m_height, h)) return;
+    prepareGeometryChange();
+    m_width = w;
+    m_height = h;
+    m_contentDocDirty = true;
     update();
 }
 
@@ -214,6 +238,13 @@ void CardWidget::animateTo(const QPointF &targetPos, int duration)
 void CardWidget::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton) {
+        // 返回按钮优先
+        if (m_focused && hitReturnButton(event->pos())) {
+            emit returnRequested(this);
+            event->accept();
+            return;
+        }
+
         ResizeMode mode = hitResizeZone(event->pos());
         if (mode != None) {
             m_resizeMode = mode;
@@ -223,8 +254,12 @@ void CardWidget::mousePressEvent(QGraphicsSceneMouseEvent *event)
             event->accept();
             return;
         }
-        m_isDragging = true;
-        m_dragStartPos = event->pos();
+
+        // 焦点模式下不允许拖动卡片
+        if (!m_focused) {
+            m_isDragging = true;
+            m_dragStartPos = event->pos();
+        }
     }
     QGraphicsItem::mousePressEvent(event);
 }
@@ -458,6 +493,37 @@ void CardWidget::paintLatexContent(QPainter *painter, const QRectF &contentRect)
 void CardWidget::updateAppearance()
 {
     // Reserved for future use
+}
+
+bool CardWidget::hitReturnButton(const QPointF &pos) const
+{
+    // 返回按钮在卡片正上方居中
+    qreal cx = 0;
+    qreal cy = -m_height / 2 - s_returnButtonSize - 4;
+    qreal dx = pos.x() - cx;
+    qreal dy = pos.y() - cy;
+    return (dx * dx + dy * dy) <= (s_returnButtonSize * s_returnButtonSize);
+}
+
+void CardWidget::paintReturnButton(QPainter *painter)
+{
+    qreal cx = 0;
+    qreal cy = -m_height / 2 - s_returnButtonSize - 4;
+    qreal r = s_returnButtonSize - 4;
+
+    // 圆形背景
+    painter->setPen(QPen(QColor(200, 200, 200, 200), 1));
+    painter->setBrush(QColor(70, 130, 180, 220));
+    painter->drawEllipse(QPointF(cx, cy), r, r);
+
+    // 左箭头 (←)
+    painter->setPen(QPen(QColor(255, 255, 255), 2.5, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    QPainterPath arrow;
+    qreal s = r * 0.55;
+    arrow.moveTo(cx + s * 0.5, cy - s);
+    arrow.lineTo(cx - s * 0.5, cy);
+    arrow.lineTo(cx + s * 0.5, cy + s);
+    painter->drawPath(arrow);
 }
 
 #include "CardWidget.moc"
