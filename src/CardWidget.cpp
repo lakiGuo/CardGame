@@ -409,28 +409,38 @@ void CardWidget::paintLatexContent(QPainter *painter, const QRectF &contentRect)
 
     for (const auto &seg : m_renderSegments) {
         if (seg.type == RenderSegment::Text) {
-            QString remaining = seg.text;
-            while (!remaining.isEmpty()) {
-                int spaceIdx = remaining.indexOf(' ');
-                QString word;
-                if (spaceIdx >= 0) {
-                    word = remaining.left(spaceIdx + 1);
-                    remaining = remaining.mid(spaceIdx + 1);
-                } else {
-                    word = remaining;
-                    remaining.clear();
-                }
-
-                int wordWidth = fm.horizontalAdvance(word);
-                if (x + wordWidth > rightEdge && x > contentRect.left()) {
+            // Split by newlines to preserve line breaks
+            QStringList lines = seg.text.split('\n');
+            for (int li = 0; li < lines.size(); ++li) {
+                if (li > 0) {
                     x = contentRect.left();
                     y += lineHeight;
                     baseline = y + fm.ascent();
                     if (y > bottomEdge) return;
                 }
+                QString remaining = lines[li];
+                while (!remaining.isEmpty()) {
+                    int spaceIdx = remaining.indexOf(' ');
+                    QString word;
+                    if (spaceIdx >= 0) {
+                        word = remaining.left(spaceIdx + 1);
+                        remaining = remaining.mid(spaceIdx + 1);
+                    } else {
+                        word = remaining;
+                        remaining.clear();
+                    }
 
-                painter->drawText(QPointF(x, baseline), word);
-                x += wordWidth;
+                    int wordWidth = fm.horizontalAdvance(word);
+                    if (x + wordWidth > rightEdge && x > contentRect.left()) {
+                        x = contentRect.left();
+                        y += lineHeight;
+                        baseline = y + fm.ascent();
+                        if (y > bottomEdge) return;
+                    }
+
+                    painter->drawText(QPointF(x, baseline), word);
+                    x += wordWidth;
+                }
             }
         } else if (seg.type == RenderSegment::InlineMath) {
             if (seg.svgPath.isEmpty()) {
