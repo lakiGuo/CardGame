@@ -40,3 +40,13 @@ add_executable(test_deck_system
     ../src/CardManager.cpp
 )
 target_link_libraries(test_deck_system Qt5::Core Qt5::Widgets Qt5::Test)
+
+# Test 5: Card Search Test Suite
+add_executable(test_search
+    test_search.cpp
+    ../src/Deck.cpp
+    ../src/DeckManager.cpp
+    ../src/Card.cpp
+    ../src/CardManager.cpp
+)
+target_link_libraries(test_search Qt5::Core Qt5::Widgets Qt5::Test)

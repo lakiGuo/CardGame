@@ -6,6 +6,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <vector>
+#include <algorithm>
 
 class CardManager
 {
@@ -38,6 +39,9 @@ public:
 
     // Get default JSON file path
     static QString getDefaultJsonPath();
+
+    // Search cards by keyword (case-insensitive, matches title and content)
+    std::vector<Card> searchCards(const QString &keyword) const;
 
 private:
     Card cardFromJson(const QJsonObject &obj);

@@ -112,6 +112,25 @@ void MainWindow::setupUI()
 
     panelLayout->addSpacing(15);
 
+    // Search section
+    auto *searchLabel = new QLabel("Search:", controlPanel);
+    searchLabel->setObjectName("sectionLabel");
+    panelLayout->addWidget(searchLabel);
+
+    m_searchEdit = new QLineEdit(controlPanel);
+    m_searchEdit->setObjectName("searchEdit");
+    m_searchEdit->setPlaceholderText("Type to search cards...");
+    connect(m_searchEdit, &QLineEdit::textChanged, this, &MainWindow::onSearchTextChanged);
+    panelLayout->addWidget(m_searchEdit);
+
+    m_searchResultLabel = new QLabel("", controlPanel);
+    m_searchResultLabel->setObjectName("searchResultLabel");
+    m_searchResultLabel->setAlignment(Qt::AlignCenter);
+    m_searchResultLabel->setVisible(false);
+    panelLayout->addWidget(m_searchResultLabel);
+
+    panelLayout->addSpacing(15);
+
     // Game actions section
     auto *gameLabel = new QLabel("Game:", controlPanel);
     gameLabel->setObjectName("sectionLabel");
@@ -313,6 +332,33 @@ void MainWindow::applyStylesheet()
 
         #fileButton:hover {
             background-color: #95a5a6;
+        }
+
+        /* Search Edit */
+        #searchEdit {
+            background-color: #1a252f;
+            color: #ecf0f1;
+            border: 2px solid #34495e;
+            border-radius: 6px;
+            padding: 10px 12px;
+            font-size: 13px;
+        }
+
+        #searchEdit:focus {
+            border-color: #3498db;
+        }
+
+        #searchEdit::placeholder {
+            color: #7f8c8d;
+        }
+
+        /* Search Result Label */
+        #searchResultLabel {
+            color: #3498db;
+            font-size: 12px;
+            padding: 5px;
+            background-color: #1a252f;
+            border-radius: 4px;
         }
 
         /* Deck Info Label */
@@ -748,6 +794,52 @@ void MainWindow::onActiveDeckChanged(const QString &deckName)
 {
     updateDeckInfoLabel();
     qDebug() << "Active deck changed to:" << deckName;
+}
+
+void MainWindow::onSearchTextChanged(const QString &text)
+{
+    if (!m_deckManager->hasActiveDeck()) {
+        return;
+    }
+
+    if (text.isEmpty()) {
+        m_searchResultLabel->setVisible(false);
+        // If in browse mode, show all cards
+        if (m_table->mode() == CardTable::TableMode::Browse) {
+            m_table->clearTable();
+            std::vector<Card> allCards = m_deckManager->getActiveDeckCards();
+            if (!allCards.empty()) {
+                m_table->layoutCardsInGrid(allCards);
+                m_view->fitInView(m_table->sceneRect(), Qt::KeepAspectRatio);
+            }
+            m_statusLabel->setText(QString("Browsing '%1' (%2 cards)")
+                .arg(m_deckManager->activeDeck()->name())
+                .arg(allCards.size()));
+        }
+        return;
+    }
+
+    // Perform search
+    std::vector<Card> results = m_deckManager->searchActiveDeck(text);
+
+    // Update search result label
+    m_searchResultLabel->setVisible(true);
+    m_searchResultLabel->setText(QString("%1 of %2 cards match")
+        .arg(results.size())
+        .arg(m_deckManager->activeDeckCardCount()));
+
+    // If in browse mode, show filtered results
+    if (m_table->mode() == CardTable::TableMode::Browse) {
+        m_table->clearTable();
+        if (!results.empty()) {
+            m_table->layoutCardsInGrid(results);
+            m_view->fitInView(m_table->sceneRect(), Qt::KeepAspectRatio);
+        }
+        m_statusLabel->setText(QString("Search '%1': %2 results in '%3'")
+            .arg(text)
+            .arg(results.size())
+            .arg(m_deckManager->activeDeck()->name()));
+    }
 }
 
 void MainWindow::checkAndMigrateOldData()

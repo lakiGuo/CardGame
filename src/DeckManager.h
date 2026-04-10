@@ -37,6 +37,9 @@ public:
     std::vector<Card> getActiveDeckCards() const;
     size_t activeDeckCardCount() const;
 
+    // Search cards in active deck by keyword
+    std::vector<Card> searchActiveDeck(const QString &keyword) const;
+
 signals:
     /**
      * @brief 活动卡组变更信号

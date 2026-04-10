@@ -80,6 +80,11 @@ size_t Deck::cardCount() const
     return m_cardManager.count();
 }
 
+std::vector<Card> Deck::searchCards(const QString &keyword) const
+{
+    return m_cardManager.searchCards(keyword);
+}
+
 void Deck::updateTimestamp()
 {
     m_lastModified = QDateTime::currentDateTime();

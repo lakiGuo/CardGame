@@ -33,6 +33,9 @@ public:
     void clearCards();
     size_t cardCount() const;
 
+    // Search cards by keyword (case-insensitive, matches title and content)
+    std::vector<Card> searchCards(const QString &keyword) const;
+
     // 时间戳
     QDateTime createdAt() const { return m_createdAt; }
     QDateTime lastModified() const { return m_lastModified; }

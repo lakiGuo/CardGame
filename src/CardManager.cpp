@@ -96,6 +96,23 @@ void CardManager::createDefaultCards()
     };
 }
 
+std::vector<Card> CardManager::searchCards(const QString &keyword) const
+{
+    if (keyword.isEmpty())
+        return m_cards;
+
+    QString lowerKeyword = keyword.toLower();
+    std::vector<Card> results;
+
+    std::copy_if(m_cards.begin(), m_cards.end(), std::back_inserter(results),
+        [&lowerKeyword](const Card &card) {
+            return card.title().toLower().contains(lowerKeyword)
+                || card.content().toLower().contains(lowerKeyword);
+        });
+
+    return results;
+}
+
 QString CardManager::getDefaultJsonPath()
 {
     // Check in current directory first

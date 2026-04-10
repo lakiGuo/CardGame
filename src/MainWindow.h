@@ -10,6 +10,7 @@
 #include <QPushButton>
 #include <QSlider>
 #include <QLabel>
+#include <QLineEdit>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QWidget>
@@ -33,6 +34,7 @@ private slots:
     void onCardEditRequested(CardWidget *widget);
     void onCardDeleteRequested(CardWidget *widget);    // 删除卡片
     void onActiveDeckChanged(const QString &deckName);  // 活动卡组变更
+    void onSearchTextChanged(const QString &text);       // 搜索框文字变化
 
 private:
     void setupUI();
@@ -62,6 +64,8 @@ private:
     QLabel *m_dealCountLabel{nullptr};
     QLabel *m_deckInfoLabel{nullptr};
     QLabel *m_statusLabel{nullptr};
+    QLineEdit *m_searchEdit{nullptr};
+    QLabel *m_searchResultLabel{nullptr};
 
     int m_dealCount{5};
 };

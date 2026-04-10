@@ -98,3 +98,11 @@ size_t DeckManager::activeDeckCardCount() const
     }
     return 0;
 }
+
+std::vector<Card> DeckManager::searchActiveDeck(const QString &keyword) const
+{
+    if (m_activeDeck) {
+        return m_activeDeck->searchCards(keyword);
+    }
+    return std::vector<Card>();
+}
