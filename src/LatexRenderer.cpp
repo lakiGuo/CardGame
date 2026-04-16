@@ -49,13 +49,22 @@ QString LatexRenderer::getSvgPath(const QString &formula, bool displayMode)
 
 QString LatexRenderer::generateTexContent(const QString &formula, bool displayMode) const
 {
-    QString content = QString(
-        "\\documentclass[preview,border=0pt]{standalone}\n"
-        "\\usepackage{amsmath}\n"
-        "\\usepackage{amssymb}\n"
-        "\\usepackage{amsfonts}\n"
-        "\\begin{document}\n"
-    );
+    bool cjk = containsCJK(formula);
+
+    QString content = "\\documentclass[preview,border=0pt]{standalone}\n"
+                      "\\usepackage{amsmath}\n"
+                      "\\usepackage{amssymb}\n"
+                      "\\usepackage{amsfonts}\n";
+
+    if (cjk) {
+        content += "\\usepackage[encapsulated]{CJK}\n";
+    }
+
+    content += "\\begin{document}\n";
+
+    if (cjk) {
+        content += "\\begin{CJK}{UTF8}{gbsn}\n";
+    }
 
     if (displayMode) {
         content += "\\[\n" + formula + "\n\\]\n";
@@ -63,8 +72,35 @@ QString LatexRenderer::generateTexContent(const QString &formula, bool displayMo
         content += "$" + formula + "$\n";
     }
 
+    if (cjk) {
+        content += "\\end{CJK}\n";
+    }
+
     content += "\\end{document}\n";
     return content;
+}
+
+bool LatexRenderer::containsCJK(const QString &text)
+{
+    for (int i = 0; i < text.length(); i++) {
+        uint u = text.at(i).unicode();
+        // CJK Unified Ideographs: U+4E00..U+9FFF
+        // CJK Extension A: U+3400..U+4DBF
+        // CJK Compatibility Ideographs: U+F900..U+FAFF
+        // Hiragana: U+3040..U+309F
+        // Katakana: U+30A0..U+30FF
+        // CJK Radicals Supplement / Kangxi: U+2E80..U+2FDF, U+2F00..U+2FDF
+        // Fullwidth forms: U+FF00..U+FFEF
+        if ((u >= 0x4E00 && u <= 0x9FFF) ||
+            (u >= 0x3400 && u <= 0x4DBF) ||
+            (u >= 0xF900 && u <= 0xFAFF) ||
+            (u >= 0x3040 && u <= 0x309F) ||
+            (u >= 0x30A0 && u <= 0x30FF) ||
+            (u >= 0x2E80 && u <= 0x2FDF) ||
+            (u >= 0xFF00 && u <= 0xFFEF))
+            return true;
+    }
+    return false;
 }
 
 QString LatexRenderer::cacheKey(const QString &formula, int width, int height, bool displayMode)

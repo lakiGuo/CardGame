@@ -37,6 +37,7 @@ public:
 private:
     explicit LatexRenderer(QObject *parent = nullptr);
     QString generateTexContent(const QString &formula, bool displayMode) const;
+    static bool containsCJK(const QString &text);
     QString compileToSvg(const QString &formula, bool displayMode) const;
     QPixmap svgToPixmap(const QString &svgFilePath, int targetWidth, int targetHeight) const;
     QPixmap renderViaDvipng(const QString &texFilePath, const QString &baseName) const;
