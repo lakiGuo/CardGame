@@ -41,6 +41,11 @@ sudo apt-get install qtbase5-dev qt5-qmake cmake build-essential
 ```bash
 sudo apt-get install texlive-latex-recommended texlive-latex-extra dvipng
 ```
+
+**中文公式支持（可选，需要 LaTeX 公式渲染）：**
+```bash
+sudo apt-get install texlive-lang-chinese
+```
 > 未安装 LaTeX 时应用仍可正常编译和运行，公式将以原始文本显示。
 
 **Fedora:**
