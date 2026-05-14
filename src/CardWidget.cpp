@@ -12,7 +12,7 @@
 #include <QDebug>
 #include <QMenu>
 
-CardWidget::CardWidget(const Card &card, QGraphicsItem *parent)
+CardWidget::CardWidget(const Card &card, QGraphicsItem *parent, bool enableEffects, bool enableAnimation)
     : QGraphicsItem(parent)
     , m_card(card)
 {
@@ -21,19 +21,23 @@ CardWidget::CardWidget(const Card &card, QGraphicsItem *parent)
     setFlag(QGraphicsItem::ItemSendsGeometryChanges);
     setAcceptHoverEvents(true);
 
-    auto *shadow = new QGraphicsDropShadowEffect(this);
-    shadow->setBlurRadius(20);
-    shadow->setColor(QColor(0, 0, 0, 100));
-    shadow->setOffset(QPointF(0, 4));
-    setGraphicsEffect(shadow);
+    if (enableEffects) {
+        auto *shadow = new QGraphicsDropShadowEffect(this);
+        shadow->setBlurRadius(20);
+        shadow->setColor(QColor(0, 0, 0, 100));
+        shadow->setOffset(QPointF(0, 4));
+        setGraphicsEffect(shadow);
+    }
 
-    setScale(0);
-    QPropertyAnimation *scaleAnim = new QPropertyAnimation(this, "scale", this);
-    scaleAnim->setStartValue(0.0);
-    scaleAnim->setEndValue(1.0);
-    scaleAnim->setDuration(300);
-    scaleAnim->setEasingCurve(QEasingCurve::OutBack);
-    scaleAnim->start(QAbstractAnimation::DeleteWhenStopped);
+    if (enableAnimation) {
+        setScale(0);
+        QPropertyAnimation *scaleAnim = new QPropertyAnimation(this, "scale", this);
+        scaleAnim->setStartValue(0.0);
+        scaleAnim->setEndValue(1.0);
+        scaleAnim->setDuration(300);
+        scaleAnim->setEasingCurve(QEasingCurve::OutBack);
+        scaleAnim->start(QAbstractAnimation::DeleteWhenStopped);
+    }
 }
 
 // ============================================================================

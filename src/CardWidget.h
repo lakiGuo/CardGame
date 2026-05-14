@@ -19,7 +19,8 @@ class CardWidget : public QObject, public QGraphicsItem
     Q_PROPERTY(qreal scale READ scale WRITE setScale DESIGNABLE false)
 
 public:
-    explicit CardWidget(const Card &card, QGraphicsItem *parent = nullptr);
+    explicit CardWidget(const Card &card, QGraphicsItem *parent = nullptr,
+                        bool enableEffects = true, bool enableAnimation = true);
 
     QRectF boundingRect() const override;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;

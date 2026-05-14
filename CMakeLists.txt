@@ -81,3 +81,35 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
+
+# --- Performance test with 1000 cards ---
+set(LIB_SOURCES
+    src/Card.cpp
+    src/CardWidget.cpp
+    src/CardTable.cpp
+    src/CardManager.cpp
+    src/CardEditDialog.cpp
+    src/Deck.cpp
+    src/DeckRepository.cpp
+    src/DeckManager.cpp
+    src/DeckSelectionDialog.cpp
+    src/LatexRenderer.cpp
+    src/LatexParser.cpp
+    src/MainWindow.cpp
+)
+
+add_executable(test_performance_1000
+    test/test_performance_1000.cpp
+    ${LIB_SOURCES}
+    ${HEADERS}
+)
+
+target_include_directories(test_performance_1000 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+target_link_libraries(test_performance_1000 PRIVATE
+    Qt5::Core
+    Qt5::Widgets
+    Qt5::Svg
+)

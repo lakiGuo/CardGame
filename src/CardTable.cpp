@@ -145,7 +145,7 @@ void CardTable::layoutCardsInGrid(const std::vector<Card> &cards)
 
     for (int i = 0; i < n; ++i) {
         const Card &card = cards[i];
-        auto *widget = new CardWidget(card);
+        auto *widget = new CardWidget(card, nullptr, false, false);
         addItem(widget);
 
         int col = i % cols;
@@ -153,14 +153,8 @@ void CardTable::layoutCardsInGrid(const std::vector<Card> &cards)
         qreal targetX = startX + col * (CARD_WIDTH + H_GAP);
         qreal targetY = startY + row * (CARD_HEIGHT + V_GAP);
 
-        // Start from off-screen
-        widget->setPos(2000, 0);
+        widget->setPos(targetX, targetY);
         widget->setFlag(QGraphicsItem::ItemIsMovable, false);
-
-        int delay = i * 30;
-        QTimer::singleShot(delay, [widget, targetX, targetY]() {
-            widget->animateTo(QPointF(targetX, targetY), 400);
-        });
 
         // Connect signals
         connect(widget, &CardWidget::editRequested, this, [this, widget]() {
@@ -343,7 +337,7 @@ CardTableView::CardTableView(CardTable *scene, QWidget *parent)
     setDragMode(QGraphicsView::ScrollHandDrag);
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     setResizeAnchor(QGraphicsView::AnchorUnderMouse);
-    setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
     setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
